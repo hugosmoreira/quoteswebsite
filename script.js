@@ -1,35 +1,64 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quote Generator</title>
-    <link rel="icon" type="image/png" href="https://s2.googleusercontent.com/s2/favicons?domain=www.codeofliving.com">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css"/>
-    <link rel="stylesheet" href="styles.css">
-</head>
-<body>
-    <div class="quote-container" id="quote-container">
-        <!-- Quote -->
-        <div class="quote-text">
-            <i class="fas fa-quote-left"></i>
-            <span id="quote"></span>
-        </div>
-        <!-- Author -->
-        <div class="quote-author">
-            <span id="author"></span>
-        </div>
-        <!-- Buttons -->
-        <div class="button-container">
-            <button class="twitter-button" id="twitter" title="Tweet This!">
-                <i class="fab fa-twitter"></i>
-            </button>
-            <button id="new-quote">New Quote</button>
-        </div>
-    </div>
-    <!-- Loader -->
-    <div class="loader" id="loader"></div>
-    <!-- Script -->
-    <script src="script.js"></script>
-</body>
-</html>
+const quoteContainer = document.getElementById('quote-container');
+const quoteText = document.getElementById('quote');
+const authorText = document.getElementById('author');
+const twitterBtn = document.getElementById('twitter');
+const newQuoteBtn = document.getElementById('new-quote');
+const loader = document.getElementById('loader');
+
+// Mostrar o  Loading
+function loading() {
+    loader.hidden = false;
+    quoteContainer.hidden = true;
+}
+
+// Esconder o  Loading
+function complete() {
+    if (!loader.hidden) {
+        quoteContainer.hidden = false;
+        loader.hidden = true;
+    }
+}
+
+// pegar quotes da API
+async function getQuote() {
+    loading();
+    const proxyUrl = 'https://whispering-tor-04671.herokuapp.com/'
+    const apiUrl = 'http://api.forismatic.com/api/1.0/?method=getQuote&lang=en&format=json';
+    try {
+        const response = await fetch(proxyUrl + apiUrl);
+        const data = await response.json();
+        // If Author is blank, add 'Unknown'
+        if (data.quoteAuthor === '') {
+            authorText.innerText = 'Unknown';
+        } else {
+            authorText.innerText = data.quoteAuthor;
+        }
+        // reduzir o tamnho das fontes
+        if (data.quoteText.length > 120) {
+            quoteText.classList.add('long-quote');
+        } else {
+            quoteText.classList.remove('long-quote');
+        }
+        quoteText.innerText = data.quoteText;
+        // Stop Loader, Show Quote
+        complete();
+    } catch (error) {
+        getQuote();
+    }
+}
+
+// Tweet Quote
+function tweetQuote() {
+    const quote = quoteText.innerText;
+    const author = authorText.innerText;
+    const twitterUrl = `https://twitter.com/intent/tweet?text=${quote} - ${author}`;
+    window.open(twitterUrl, '_blank');
+}
+
+// Event Listeners
+newQuoteBtn.addEventListener('click', getQuote);
+twitterBtn.addEventListener('click', tweetQuote);
+
+// On Load
+getQuote();
+
